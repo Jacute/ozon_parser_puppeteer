@@ -29,12 +29,10 @@ function getUrlsArray(urls) {
     return result;
 }
 
-function formatData(originalArray) {
-    // Разделение массива на два списка (товары и цены)
+function formatData(originalArray) { // special table format
     const products = originalArray.map(item => item[0]);
     const prices = originalArray.map(item => item[1]);
   
-    // Формирование нового массива
     const formattedArray = [];
     for (let i = 0; i < products.length; i += 3) {
       formattedArray.push(products.slice(i, i + 3));
@@ -60,7 +58,10 @@ async function loadToGoogleSheet(data) {
     
     await doc.loadInfo();
 
-    const sheet = doc.sheetsByTitle[process.env.SHEET_NAME]; // or use `doc.sheetsById[id]` or `doc.sheetsByTitle[title]`
+    let sheet = doc.sheetsByTitle[process.env.SHEET_NAME];
+    if (!sheet) sheet = await doc.addSheet({ title: process.env.SHEET_NAME }); // create sheet if not found
+
+    await sheet.clear();
 
     await sheet.loadCells(`A1:C${data.length}`);
     for (let i = 0; i < data.length; i++) {
@@ -98,15 +99,15 @@ async function start(browser) {
         await page.goto(urls[i]);
 
         const name = await page.$('h1');
-        const price = await page.$('.m9l');
+        const price = await page.$('.nl3 span');
 
         if (name && price) {
             const nameText = await page.evaluate(el => el.textContent, name);
             const priceText = await page.evaluate(el => el.textContent, price);
-
+            
             result.push([nameText, priceText]);
         } else {
-            console.error("Skipping URL: " + urls[i]);
+            console.error("Skip URL: " + urls[i]);
         }
     }
 
