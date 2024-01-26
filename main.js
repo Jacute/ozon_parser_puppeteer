@@ -122,7 +122,13 @@ async function start(browser) {
 require('dotenv').config();
 const hostname = 'https://www.ozon.ru/';
 puppeteer.use(StealthPlugin());
-puppeteer.launch({ headless: process.env.HEADLESS === 'True', executablePath: executablePath() }).then(async browser => {
+puppeteer.launch({ headless: (() => {
+    if (process.env.HEADLESS === 'True') {
+        return 'new';
+    } else {
+        return false;
+    }
+})(), executablePath: executablePath() }).then(async browser => {
     console.log("=== START PARSING ===");
     var result = await start(browser);
     console.log("=== END PARSING ===");
