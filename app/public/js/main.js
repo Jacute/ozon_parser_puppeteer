@@ -1,8 +1,10 @@
 function processData() {
     const credentialsInput = document.getElementById('credentialsInput').value;
     const textInput = document.getElementById('textInput').value;
+    const tableId = document.getElementById('tableId').value;
+    const sheetName = document.getElementById('sheetName').value;
 
-    if (credentialsInput && textInput) {
+    if (credentialsInput && textInput && tableId && sheetName) {
         try {
             JSON.parse(credentialsInput);
             JSON.parse(textInput);
@@ -13,7 +15,7 @@ function processData() {
     }
     credentialsInput.value = '';
     textInput.value = ''
-    return [credentialsInput, textInput];
+    return [credentialsInput, textInput, tableId, sheetName];
 }
 
 
@@ -28,6 +30,7 @@ socket.on('output', (output) => {
     item.textContent = output;
 
     messages.appendChild(item);
+    messages.scrollTop = messages.scrollHeight;
     
 })
 
@@ -39,6 +42,9 @@ form.addEventListener('submit', (event) => {
     if (inputs) {
         const credentials = inputs[0];
         const text = inputs[1];
-        socket.emit('run', credentials, text);
+        const tableId = inputs[2];
+        const sheetName = inputs[3];
+
+        socket.emit('run', credentials, text, tableId, sheetName);
     }
 });
