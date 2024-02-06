@@ -7,17 +7,27 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <form id="dataForm">
-    <label for="credentialsInput">JSON Credentials:</label>
-    <textarea  id="credentialsInput" name="credentialsInput" placeholder="Enter JSON credentials"></textarea>
+  <div class="container">
+    <form id="dataForm">
+      <label for="credentialsInput">JSON Credentials:</label>
+      <textarea  id="credentialsInput" name="credentialsInput" placeholder="Enter JSON credentials"></textarea>
+  
+      <label for="textInput">JSON Input:</label>
+      <textarea id="textInput" name="textInput" placeholder="Enter JSON Input"></textarea>
+      
+      <label for="tableId">Table Id:</label>
+      <input id="tableId" name="tableId" placeholder="Enter Table ID">
 
-    <label for="textInput">JSON Input:</label>
-    <textarea id="textInput" name="textInput" placeholder="Enter JSON Input"></textarea>
+      <label for="sheetName">Sheet Name:</label>
+      <input id="sheetName" name="tableId" placeholder="Enter Sheet Name">
 
-    <button type="submit">Process Data</button>
-  </form>
+      <button type="submit">Run</button>
+    </form>
+  
+    <div id="messages">
 
-  <div id="messages"></div>
+    </div>
+  </div>
 
   <script src="js/socket.io.min.js"></script>
   <script src="js/main.js"></script>
