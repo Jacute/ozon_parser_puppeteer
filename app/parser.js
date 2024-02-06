@@ -4,7 +4,6 @@ const { JWT } = require('google-auth-library');
 const process = require('process');
 const { executablePath } = require('puppeteer');
 const puppeteer = require('puppeteer-extra');
-const fs = require('fs');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 
@@ -12,22 +11,13 @@ const EventEmitter = require('events');
 
 
 class OzonParser extends EventEmitter {
-    constructor(credentials=null, input=null) {
+    constructor(credentials, input, tableId, sheetName) {
         super();
         this.hostname = 'https://www.ozon.ru/';
         this.credentials = credentials;
         this.input = input;
-    }
-    
-    readJson(filePath) {
-        try {
-            const data = fs.readFileSync(filePath, 'utf8');
-            const jsonContent = JSON.parse(data);
-            return jsonContent;
-        } catch (e) {
-            console.error(e);
-            return;
-        }
+        this.tableId = tableId;
+        this.sheetName = sheetName;
     }
     
     getUrlsArray(urls) { 
@@ -56,27 +46,20 @@ class OzonParser extends EventEmitter {
       
     
     async loadToGoogleSheet(data) {
-        var credentialsData;
-        if (this.credentials) {
-            credentialsData = this.credentials;
-        } else {
-            credentialsData = this.readJson(process.env.CREDENTIALS_PATH);
-        }
-        
         const serviceAccountAuth = new JWT({
-            email: credentialsData['client_email'],
-            key: credentialsData['private_key'],
+            email: this.credentials['client_email'],
+            key: this.credentials['private_key'],
             scopes: [
               'https://www.googleapis.com/auth/spreadsheets',
             ],
         });
         
-        const doc = new GoogleSpreadsheet(process.env.TABLE_ID, serviceAccountAuth);
+        const doc = new GoogleSpreadsheet(this.tableId, serviceAccountAuth);
         
         await doc.loadInfo();
     
-        let sheet = doc.sheetsByTitle[process.env.SHEET_NAME];
-        if (!sheet) sheet = await doc.addSheet({ title: process.env.SHEET_NAME }); // create sheet if not found
+        let sheet = doc.sheetsByTitle[this.sheetName];
+        if (!sheet) sheet = await doc.addSheet({ title: this.sheetName }); // create sheet if not found
     
         await sheet.clear();
     
@@ -98,32 +81,30 @@ class OzonParser extends EventEmitter {
         var result = [];
         var urls;
 
-        if (this.input) {
-            urls = this.getUrlsArray(this.input[0]);
-        } else {
-            urls = this.getUrlsArray(this.readJson(process.env.INPUT_PATH)[0]);
-        }
+        urls = this.getUrlsArray(this.input[0]);
     
         const page = await browser.newPage()
         
         for (let i = 0; i < urls.length; i++) {
             this.emit('output', `Parsing ${i + 1} of ${urls.length}. URL: ${urls[i]}`)
-    
+
             await page.goto(urls[i]);
 
-            await page.waitForTimeout(2000);
+            try {
+                await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 15});
+            } catch (e) {
+                this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
+            }
             
             const button = await page.$('#reload-button'); // escape warning
             if (button) {
                 await button.click();
-                await page.waitForTimeout(2000);
+                await page.waitForSelector('#__ozon', {timeout: 1000 * 15});
             }
 
             let name = await page.$('h1');
             let [price] = await page.$x('//div/div[2]/div/div/span[contains(text(), "₽")][1]');
-            
-            if (!price) [price] = await page.$x('//div/div[1]/div/div/span[contains(text(), "₽")][1]');
-
+            if (price === undefined) [price] = await page.$x('//div/div[1]/div/div/span[contains(text(), "₽")][1]');
             if (name && price) {
                 const nameText = await page.evaluate(el => el.textContent, name);
                 const priceText = await page.evaluate(el => el.textContent, price);
@@ -144,7 +125,9 @@ class OzonParser extends EventEmitter {
     async start() {
         require('dotenv').config();
         puppeteer.use(StealthPlugin());
-        puppeteer.launch({ headless: (() => {
+        puppeteer.launch({ 
+        args: ['--no-sandbox'], 
+        headless: (() => {
             if (process.env.HEADLESS === 'True') {
                 return 'new';
             } else {
@@ -172,8 +155,16 @@ class OzonParser extends EventEmitter {
 
 
 if (require.main === module) {
+    const { readJson } = require('./utils');
+
     require('dotenv').config();
-    const parser = new OzonParser();
+
+    let credentials = JSON.parse(readJson(process.env.CREDENTIALS_PATH));
+    let input = JSON.parse(readJson(process.env.INPUT_PATH));
+    let tableId = process.env.TABLE_ID;
+    let sheetName = process.env.SHEET_NAME;
+
+    const parser = new OzonParser(credentials, input, tableId, sheetName);
 
     parser.on('output', (output) => {
         console.log(output);

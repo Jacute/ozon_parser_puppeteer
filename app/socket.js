@@ -1,16 +1,7 @@
 const socketIO = require('socket.io');
 const OzonParser = require('./parser.js');
 
-const fs = require('fs');
-
-
-function saveFile(filepath, data) {
-    fs.writeFile(filepath, data, (err) => {
-        if (err) {
-            console.error("Ошибка сохранения файла:", err);
-        }
-    });
-}
+const { saveFile, readJson } = require('./utils.js');
 
 
 function socketRun(server) {
@@ -19,17 +10,30 @@ function socketRun(server) {
     io.on('connection', (socket) => {
         console.log('User connected');
 
-        socket.on('run', (credentials, input) => {
+        socket.on('run', (credentials, input, tableId, sheetName) => {
+            let parser;
+            
             if (credentials) saveFile(process.env.CREDENTIALS_PATH, credentials);
             if (input) saveFile(process.env.INPUT_PATH, input);
+            
+            if (tableId && sheetName) {
+                if (credentials && input) {
+                    parser = new OzonParser(JSON.parse(credentials), JSON.parse(input), tableId, sheetName);
+                } else {
+                    credentials = readJson(process.env.CREDENTIALS_PATH);
+                    input = readJson(process.env.INPUT_PATH);
+                    parser = new OzonParser(credentials, input, tableId, sheetName);
+                }
 
-            const parser = new OzonParser();
-
-            parser.on('output', (output) => {
-                socket.emit('output', output);
-            });
-
-            parser.start();
+                parser.on('output', (output) => {
+                    console.log(output);
+                    socket.emit('output', output);
+                });
+    
+                parser.start();
+            } else {
+                socket.emit('output', "Table Id and Sheet Name are required");
+            }
         });
 
         socket.on('disconnect', () => {
