@@ -83,7 +83,17 @@ class OzonParser extends EventEmitter {
 
         urls = this.getUrlsArray(this.input[0]);
     
-        const page = await browser.newPage()
+        const page = await browser.newPage();
+
+        await page.setRequestInterception(true);
+
+        page.on('request', (req) => {
+            if (req.resourceType() === 'image') {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
         
         for (let i = 0; i < urls.length; i++) {
             this.emit('output', `Parsing ${i + 1} of ${urls.length}. URL: ${urls[i]}`)
@@ -91,7 +101,7 @@ class OzonParser extends EventEmitter {
             await page.goto(urls[i]);
 
             try {
-                await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 15});
+                await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 33});
             } catch (e) {
                 this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
             }

@@ -1,7 +1,7 @@
 const socketIO = require('socket.io');
 const OzonParser = require('./parser.js');
 
-const { saveFile, readJson } = require('./utils.js');
+const { saveFile, readJson, fileExists } = require('./utils.js');
 
 
 function socketRun(server) {
@@ -13,8 +13,16 @@ function socketRun(server) {
         socket.on('run', (credentials, input, tableId, sheetName) => {
             let parser;
             
-            if (credentials) saveFile(process.env.CREDENTIALS_PATH, credentials);
-            if (input) saveFile(process.env.INPUT_PATH, input);
+            if (credentials) {
+                saveFile(process.env.CREDENTIALS_PATH, credentials);
+            } else {
+                if (!fileExists(process.env.CREDENTIALS_PATH)) socket.emit('output', 'Write your credentials')
+            }
+            if (input) {
+                saveFile(process.env.INPUT_PATH, input);
+            } else {
+                if (!fileExists(process.env.INPUT_PATH)) socket.emit('output', 'Write your input')
+            }
             
             if (tableId && sheetName) {
                 if (credentials && input) {

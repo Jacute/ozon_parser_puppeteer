@@ -20,5 +20,11 @@ function readJson(filePath) {
     }
 }
 
+function fileExists(filePath) {
+    if (fs.existsSync(filePath)) {
+        return true;
+    }
+    return false;
+}
 
-module.exports = { readJson, saveFile };
+module.exports = { readJson, saveFile, fileExists };
