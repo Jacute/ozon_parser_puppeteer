@@ -169,8 +169,8 @@ if (require.main === module) {
 
     require('dotenv').config();
 
-    let credentials = JSON.parse(readJson(process.env.CREDENTIALS_PATH));
-    let input = JSON.parse(readJson(process.env.INPUT_PATH));
+    let credentials = readJson(process.env.CREDENTIALS_PATH);
+    let input = readJson(process.env.INPUT_PATH);
     let tableId = process.env.TABLE_ID;
     let sheetName = process.env.SHEET_NAME;
 
