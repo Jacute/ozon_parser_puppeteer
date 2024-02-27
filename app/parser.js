@@ -96,7 +96,7 @@ class OzonParser extends EventEmitter {
         await page.setRequestInterception(true);
 
         page.on('request', (req) => {
-            if (req.resourceType() === 'image') {
+            if (req.resourceType() === 'image' || req.resourceType() === 'video') {
                 req.abort();
             } else {
                 req.continue();
@@ -143,9 +143,10 @@ class OzonParser extends EventEmitter {
     async start() {
         require('dotenv').config();
         puppeteer.use(StealthPlugin());
-        puppeteer.launch({ 
+        puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'], 
         defaultViewport: { width: 800, height: 600 },
+        protocolTimeout: 1000 * 60 * 2,
         headless: (() => {
             if (process.env.HEADLESS === 'True') {
                 return 'new';
