@@ -96,7 +96,7 @@ class OzonParser extends EventEmitter {
         await page.setRequestInterception(true);
 
         page.on('request', (req) => {
-            if (req.resourceType() === 'image' || req.resourceType() === 'video') {
+            if (req.resourceType() === 'image' || req.resourceType() === 'video' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
                 req.abort();
             } else {
                 req.continue();
