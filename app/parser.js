@@ -33,7 +33,7 @@ class OzonParser extends EventEmitter {
                 }
             }
         } catch (e) {
-            this.emit('error', e)
+            this.emit('error', e);
         }
     
         return result;
@@ -144,7 +144,8 @@ class OzonParser extends EventEmitter {
         require('dotenv').config();
         puppeteer.use(StealthPlugin());
         puppeteer.launch({ 
-        args: ['--no-sandbox'], 
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'], 
+        defaultViewport: { width: 800, height: 600 },
         headless: (() => {
             if (process.env.HEADLESS === 'True') {
                 return 'new';
