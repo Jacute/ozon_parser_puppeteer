@@ -9,6 +9,8 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 const EventEmitter = require('events');
 
+const urlRegex = /(http(s)?:\/\/[^\s]+)/g;
+
 
 class OzonParser extends EventEmitter {
     constructor(credentials, input, tableId, sheetName) {
@@ -22,10 +24,16 @@ class OzonParser extends EventEmitter {
     
     getUrlsArray(urls) { 
         const result = [];
-    
-        for (const key in urls) {
-            result.push(key);
-            result.push(urls[key]);
+        
+        try {
+            for (const obj of urls) {
+                for (const key in obj) {
+                    if (urlRegex.test(key)) result.push(key);
+                    if (urlRegex.test(urls[key])) result.push(urls[key]);
+                }
+            }
+        } catch (e) {
+            this.emit('error', e)
         }
     
         return result;
@@ -81,7 +89,7 @@ class OzonParser extends EventEmitter {
         var result = [];
         var urls;
 
-        urls = this.getUrlsArray(this.input[0]);
+        urls = this.getUrlsArray(this.input);
     
         const page = await browser.newPage();
 
@@ -165,12 +173,12 @@ class OzonParser extends EventEmitter {
 
 
 if (require.main === module) {
-    const { readJson } = require('./utils');
+    const { readFile } = require('./utils');
 
     require('dotenv').config();
 
-    let credentials = readJson(process.env.CREDENTIALS_PATH);
-    let input = readJson(process.env.INPUT_PATH);
+    let credentials = JSON.parse(readFile(process.env.CREDENTIALS_PATH));
+    let input = JSON.parse(readFile(process.env.INPUT_PATH));
     let tableId = process.env.TABLE_ID;
     let sheetName = process.env.SHEET_NAME;
 

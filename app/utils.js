@@ -9,11 +9,10 @@ function saveFile(filepath, data) {
     });
 }
 
-function readJson(filePath) {
+function readFile(filePath) {
     try {
         const data = fs.readFileSync(filePath, 'utf8');
-        const jsonContent = JSON.parse(data);
-        return jsonContent;
+        return data;
     } catch (e) {
         console.error(e);
         return;
@@ -27,4 +26,4 @@ function fileExists(filePath) {
     return false;
 }
 
-module.exports = { readJson, saveFile, fileExists };
+module.exports = { readFile, saveFile, fileExists };
