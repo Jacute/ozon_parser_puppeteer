@@ -28,8 +28,7 @@ class OzonParser extends EventEmitter {
         try {
             for (const obj of urls) {
                 for (const key in obj) {
-                    if (urlRegex.test(key)) result.push(key);
-                    if (urlRegex.test(urls[key])) result.push(urls[key]);
+                    if (urlRegex.test(obj[key])) result.push(obj[key]);
                 }
             }
         } catch (e) {

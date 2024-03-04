@@ -1,3 +1,9 @@
+const socket = io();
+
+const form = document.getElementById('dataForm');
+const messages = document.getElementById('messages');
+
+
 function processData() {
     const credentialsInput = document.getElementById('credentialsInput').value;
     const textInput = document.getElementById('textInput').value;
@@ -9,7 +15,7 @@ function processData() {
             JSON.parse(credentialsInput);
             JSON.parse(textInput);
         } catch (e) {
-            console.error('Error! ' + e);
+            addMessage('Error! ' + e);
             return null;
         }
     }
@@ -18,20 +24,17 @@ function processData() {
     return [credentialsInput, textInput, tableId, sheetName];
 }
 
-
-const socket = io();
-
-const form = document.getElementById('dataForm');
-const messages = document.getElementById('messages');
-
-socket.on('output', (output) => {
+function addMessage(message) {
     const item = document.createElement('p');
 
-    item.textContent = output;
+    item.textContent = message;
 
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
-    
+}
+
+socket.on('output', (output) => {
+    addMessage(output);
 })
 
 form.addEventListener('submit', (event) => {

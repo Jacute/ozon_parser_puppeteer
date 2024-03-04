@@ -37,8 +37,12 @@ function socketRun(server) {
                     console.log(output);
                     socket.emit('output', output);
                 });
-    
-                parser.start();
+                
+                try {
+                    parser.start();
+                } catch (e) {
+                    socket.emit('output', `Error: ${e}`);
+                }
             } else {
                 socket.emit('output', "Table Id and Sheet Name are required");
             }
