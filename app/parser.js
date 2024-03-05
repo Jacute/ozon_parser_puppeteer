@@ -111,12 +111,18 @@ class OzonParser extends EventEmitter {
                 await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 33});
             } catch (e) {
                 this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
+                continue;
             }
             
-            const button = await page.$('#reload-button'); // escape warning
-            if (button) {
-                await button.click();
-                await page.waitForSelector('#__ozon', {timeout: 1000 * 15});
+            try {
+                const button = await page.$('#reload-button'); // escape warning
+                if (button) {
+                    await button.click();
+                    await page.waitForSelector('#__ozon', {timeout: 1000 * 15});
+                }
+            } catch (e) {
+                this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
+                continue;
             }
 
             let name = await page.$('h1');
