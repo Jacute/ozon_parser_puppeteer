@@ -104,37 +104,32 @@ class OzonParser extends EventEmitter {
         
         for (let i = 0; i < urls.length; i++) {
             this.emit('output', `Parsing ${i + 1} of ${urls.length}. URL: ${urls[i]}`)
-
-            await page.goto(urls[i]);
-
             try {
+                await page.goto(urls[i], {timeout: 1000 * 60});
                 await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 33});
-            } catch (e) {
-                this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
-                continue;
-            }
-            
-            try {
                 const button = await page.$('#reload-button'); // escape warning
                 if (button) {
                     await button.click();
                     await page.waitForSelector('#__ozon', {timeout: 1000 * 15});
                 }
+
+                let name = await page.$('h1');
+                let [price] = await page.$x('//div/div[2]/div/div/span[contains(text(), "₽")][1]');
+                if (price === undefined) [price] = await page.$x('//div/div[1]/div/div/span[contains(text(), "₽")][1]');
+
+                if (name && price) {
+                    const nameText = await page.evaluate(el => el.textContent, name);
+                    const priceText = await page.evaluate(el => el.textContent, price);
+    
+                    result.push([nameText, priceText]);
+                } else {
+                    result.push(['', '']);
+                    this.emit('output', "Skip URL: " + urls[i]);
+                }
             } catch (e) {
+                result.push(['', '']);
                 this.emit('output', "Error: " + e + ". Skip URL: " + urls[i]);
                 continue;
-            }
-
-            let name = await page.$('h1');
-            let [price] = await page.$x('//div/div[2]/div/div/span[contains(text(), "₽")][1]');
-            if (price === undefined) [price] = await page.$x('//div/div[1]/div/div/span[contains(text(), "₽")][1]');
-            if (name && price) {
-                const nameText = await page.evaluate(el => el.textContent, name);
-                const priceText = await page.evaluate(el => el.textContent, price);
-
-                result.push([nameText, priceText]);
-            } else {
-                this.emit('output', "Skip URL: " + urls[i]);
             }
         }
     
