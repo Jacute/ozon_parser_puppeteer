@@ -28,7 +28,8 @@ class OzonParser extends EventEmitter {
         try {
             for (const obj of urls) {
                 for (const key in obj) {
-                    if (urlRegex.test(obj[key])) result.push(obj[key]);
+                    console.log(key);
+                    if (key.includes('Конкурент')) result.push(obj[key]);
                 }
             }
         } catch (e) {
@@ -93,6 +94,7 @@ class OzonParser extends EventEmitter {
         const page = await browser.newPage();
 
         await page.setRequestInterception(true);
+	    await page.setDefaultNavigationTimeout(1000 * 60);
 
         page.on('request', (req) => {
             if (req.resourceType() === 'image' || req.resourceType() === 'video' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
@@ -105,7 +107,7 @@ class OzonParser extends EventEmitter {
         for (let i = 0; i < urls.length; i++) {
             this.emit('output', `Parsing ${i + 1} of ${urls.length}. URL: ${urls[i]}`)
             try {
-                await page.goto(urls[i], {timeout: 1000 * 60});
+                await page.goto(urls[i]);
                 await page.waitForSelector(':is(#reload-button, #__ozon)', {timeout: 1000 * 33});
                 const button = await page.$('#reload-button'); // escape warning
                 if (button) {
